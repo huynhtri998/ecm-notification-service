@@ -1,61 +1,52 @@
 package com.trilabs94.ecm_notification.kafka.consumer;
 
-import com.trilabs94.ecm_notification.entity.Notification;
-import com.trilabs94.ecm_notification.repository.NotificationRepository;
-import com.trilabs94.ecm_notification.service.EmailService;
+
+import com.trilabs94.ecm_notification.kafka.event.OrderCreatedEvent;
+import com.trilabs94.ecm_notification.kafka.event.PaymentCompletedEvent;
+import com.trilabs94.ecm_notification.kafka.event.PaymentFailedEvent;
+import com.trilabs94.ecm_notification.service.INotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.messaging.MessagingException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
-import static java.lang.String.format;
-
-@Service
+@Component
 @Slf4j
 @RequiredArgsConstructor
 public class NotificationsConsumer {
 
-    private final NotificationRepository repository;
-    private final EmailService emailService;
-    @KafkaListener(topics = "payment-topic")
-    public void consumePaymentSuccessNotifications(PaymentConfirmation paymentConfirmation) throws MessagingException {
-        log.info(format("Consuming the message from payment-topic Topic:: %s", paymentConfirmation));
-        repository.save(
-                Notification.builder()
-                        .type(PAYMENT_CONFIRMATION)
-                        .notificationDate(LocalDateTime.now())
-                        .paymentConfirmation(paymentConfirmation)
-                        .build()
-        );
-        var customerName = paymentConfirmation.customerFirstname() + " " + paymentConfirmation.customerLastname();
-        emailService.sendPaymentSuccessEmail(
-                paymentConfirmation.customerEmail(),
-                customerName,
-                paymentConfirmation.amount(),
-                paymentConfirmation.orderReference()
-        );
+    private final INotificationService notificationService;
+
+    @KafkaListener(
+            topics = "${app.kafka.topics.order-created}",
+            groupId = "${app.kafka.consumer.notification-group-id:notification-service}",
+            containerFactory = "orderCreatedKafkaListenerContainerFactory"
+    )
+    public void onOrderCreated(OrderCreatedEvent event) {
+        log.info("Received OrderCreatedEvent for orderReference={}, customerId={}",
+                event.getOrderReference(), event.getCustomerId());
+        notificationService.handleOrderCreated(event);
     }
 
-    @KafkaListener(topics = "order-topic")
-    public void consumeOrderConfirmationNotifications(OrderConfirmation orderConfirmation) throws MessagingException {
-        log.info(format("Consuming the message from order-topic Topic:: %s", orderConfirmation));
-        repository.save(
-                Notification.builder()
-                        .type(ORDER_CONFIRMATION)
-                        .notificationDate(LocalDateTime.now())
-                        .orderConfirmation(orderConfirmation)
-                        .build()
-        );
-        var customerName = orderConfirmation.customer().firstname() + " " + orderConfirmation.customer().lastname();
-        emailService.sendOrderConfirmationEmail(
-                orderConfirmation.customer().email(),
-                customerName,
-                orderConfirmation.totalAmount(),
-                orderConfirmation.orderReference(),
-                orderConfirmation.products()
-        );
+    @KafkaListener(
+            topics = "${app.kafka.topics.payment-completed}",
+            groupId = "${app.kafka.consumer.notification-group-id:notification-service}",
+            containerFactory = "paymentCompletedKafkaListenerContainerFactory"
+    )
+    public void onPaymentCompleted(PaymentCompletedEvent event) {
+        log.info("Received PaymentCompletedEvent paymentReference={}, orderId={}",
+                event.getPaymentReference(), event.getOrderId());
+        notificationService.handlePaymentCompleted(event);
+    }
+
+    @KafkaListener(
+            topics = "${app.kafka.topics.payment-failed}",
+            groupId = "${app.kafka.consumer.notification-group-id:notification-service}",
+            containerFactory = "paymentFailedKafkaListenerContainerFactory"
+    )
+    public void onPaymentFailed(PaymentFailedEvent event) {
+        log.info("Received PaymentFailedEvent paymentReference={}, orderId={}",
+                event.getPaymentReference(), event.getOrderId());
+        notificationService.handlePaymentFailed(event);
     }
 }

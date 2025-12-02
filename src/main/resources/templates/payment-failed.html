@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Order Confirmation</title>
+    <title>Payment Failed</title>
+
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
@@ -19,17 +20,31 @@
             padding: 24px 32px;
         }
         .title {
-            font-size: 20px;
+            font-size: 22px;
+            font-weight: 600;
+            color: #cf222e; /* red */
             margin-bottom: 16px;
         }
         .muted {
             color: #57606a;
             font-size: 14px;
         }
+        .failed-box {
+            border-left: 4px solid #cf222e;
+            background: #ffebe9;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
         .amount {
+            margin-top: 8px;
             font-size: 18px;
             font-weight: 600;
+        }
+        .reason {
             margin-top: 8px;
+            color: #cf222e;
+            font-weight: 500;
         }
         .footer {
             margin-top: 24px;
@@ -39,33 +54,45 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <h2 class="title">Order Confirmation</h2>
 
-    <p class="muted">
-        Hi <strong th:text="${customerName}">Customer Name</strong>,
+<div class="container">
+
+    <h2 class="title">Payment Failed</h2>
+
+    <div class="failed-box">
+        Your payment could not be processed.
+    </div>
+
+    <p>
+        <strong>Order Reference:</strong>
+        <span th:text="${orderReference}">ORD-XXXX</span>
     </p>
 
     <p>
-        Your order
-        <strong th:text="${orderReference}">ORD-XXXX</strong>
-        has been created successfully.
+        <strong>Payment Reference:</strong>
+        <span th:text="${paymentReference}">PAY-XXXX</span>
     </p>
 
     <p class="amount">
-        Total amount:
-        <span th:text="${totalAmount}">0.00</span>
+        Amount:
+        <span th:text="${amount}">0.00</span>
+    </p>
+
+    <p class="reason">
+        Reason: <span th:text="${failureReason}">Insufficient funds</span>
     </p>
 
     <p class="muted">
-        Created at:
-        <span th:text="${createdAt}">2025-01-01T00:00:00Z</span>
+        Failed At:
+        <span th:text="${failedAt}">2025-01-01T00:00:00Z</span>
     </p>
 
     <p class="footer">
-        Thank you for shopping with us.<br/>
+        You can retry your payment anytime.<br/>
         E-commerce Demo Notification Service
     </p>
+
 </div>
+
 </body>
 </html>

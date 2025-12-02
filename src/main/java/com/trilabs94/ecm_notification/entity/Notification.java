@@ -1,27 +1,43 @@
 package com.trilabs94.ecm_notification.entity;
 
-import com.trilabs94.ecm_notification.enums.NotificationType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
+@Entity
+@Table(name = "notifications")
 @Getter
 @Setter
-@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
-    private NotificationType type;
-    private LocalDateTime notificationDate;
-    private Integer orderId;
-    private Integer paymentId;
+    @EqualsAndHashCode.Include
+    private Long id;
+
+    @Column(name = "sender", nullable = false)
+    private String sender;
+
+    @Column(name = "recipient", nullable = false)
+    private String recipient;
+
+    @Column(name = "content", nullable = false)
+    private String content;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "order_id")
+    private Long orderId;
+
+    @Column(name = "payment_id")
+    private Long paymentId;
 }
